@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Emotion Recognition System - AI Face Analysis</title>
+        <meta
+            name="description"
+            content="Real-time emotion detection using AI and facial recognition"
+        />
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"
+        ></script>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background: #fafafa;
+                color: #2c3e50;
+                line-height: 1.6;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            .screen {
+                display: none;
+                min-height: 100vh;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .screen.active {
+                display: flex;
+            }
+
+            .card {
+                background: white;
+                border-radius: 12px;
+                padding: 32px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                width: 100%;
+                max-width: 500px;
+            }
+
+            .card-wide {
+                max-width: 900px;
+            }
+
+            .header {
+                text-align: center;
+                margin-bottom: 32px;
+            }
+
+            .icon-circle {
+                width: 80px;
+                height: 80px;
+                background: #e8f4f8;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 40px;
+                margin-bottom: 16px;
+            }
+
+            h1 {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #1a202c;
+            }
+
+            .subtitle {
+                color: #718096;
+                font-size: 14px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                display: block;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+                color: #4a5568;
+            }
+
+            input {
+                width: 100%;
+                padding: 12px 16px;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                font-size: 14px;
+                transition: border-color 0.2s;
+            }
+
+            input:focus {
+                outline: none;
+                border-color: #3182ce;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px 24px;
+                background: #2c3e50;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+
+            button:hover:not(:disabled) {
+                background: #1a252f;
+            }
+
+            button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            button.secondary {
+                background: #e2e8f0;
+                color: #2c3e50;
+            }
+
+            button.secondary:hover:not(:disabled) {
+                background: #cbd5e0;
+            }
+
+            .button-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-top: 20px;
+            }
+
+            .video-container {
+                position: relative;
+                background: black;
+                border-radius: 8px;
+                overflow: hidden;
+                aspect-ratio: 16 / 9;
+                margin-bottom: 20px;
+            }
+
+            video,
+            canvas {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            canvas {
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+
+            .badge {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            .badge.success {
+                background: #c6f6d5;
+                color: #22543d;
+            }
+
+            .badge.error {
+                background: #fed7d7;
+                color: #742a2a;
+            }
+
+            .countdown {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0, 0, 0, 0.7);
+                font-size: 72px;
+                font-weight: bold;
+                color: white;
+            }
+
+            .emotions-panel {
+                background: #f7fafc;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .emotions-panel h3 {
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 16px;
+                color: #4a5568;
+            }
+
+            .emotion-bar {
+                margin-bottom: 16px;
+            }
+
+            .emotion-bar-label {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                margin-bottom: 4px;
+            }
+
+            .emotion-bar-label strong {
+                font-weight: 600;
+            }
+
+            .emotion-bar-label span {
+                font-family: "Courier New", monospace;
+                font-weight: 600;
+            }
+
+            .progress {
+                width: 100%;
+                height: 8px;
+                background: #e2e8f0;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: #3182ce;
+                transition: width 0.3s ease;
+            }
+
+            .result-badge {
+                display: inline-block;
+                padding: 12px 32px;
+                border-radius: 20px;
+                font-size: 20px;
+                font-weight: bold;
+                margin: 24px 0;
+            }
+
+            .emotion-happy {
+                background: #fef3c7;
+                color: #92400e;
+                border: 2px solid #fde68a;
+            }
+            .emotion-sad {
+                background: #dbeafe;
+                color: #1e40af;
+                border: 2px solid #bfdbfe;
+            }
+            .emotion-neutral {
+                background: #f3f4f6;
+                color: #374151;
+                border: 2px solid #e5e7eb;
+            }
+            .emotion-surprised {
+                background: #e9d5ff;
+                color: #6b21a8;
+                border: 2px solid #d8b4fe;
+            }
+            .emotion-angry {
+                background: #fee2e2;
+                color: #991b1b;
+                border: 2px solid #fecaca;
+            }
+            .emotion-fearful {
+                background: #fed7aa;
+                color: #9a3412;
+                border: 2px solid #fdba74;
+            }
+            .emotion-disgusted {
+                background: #d1fae5;
+                color: #065f46;
+                border: 2px solid #a7f3d0;
+            }
+
+            .info-card {
+                background: #f7fafc;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+            }
+
+            .info-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 12px 0;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .info-row:last-child {
+                border-bottom: none;
+            }
+
+            .info-label {
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #718096;
+            }
+
+            .info-value {
+                font-size: 14px;
+                font-weight: 600;
+                color: #2c3e50;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+
+            .stat-card {
+                background: #f7fafc;
+                padding: 20px;
+                border-radius: 8px;
+                text-align: center;
+            }
+
+            .stat-value {
+                font-size: 32px;
+                font-weight: bold;
+                color: #2c3e50;
+                margin-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #718096;
+            }
+
+            .history-item {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 12px;
+                transition: box-shadow 0.2s;
+            }
+
+            .history-item:hover {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .history-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+            }
+
+            .history-name {
+                font-weight: 600;
+                color: #2c3e50;
+            }
+
+            .history-time {
+                font-size: 12px;
+                color: #718096;
+            }
+
+            .history-details {
+                font-size: 13px;
+                color: #4a5568;
+            }
+
+            .history-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                background: #e2e8f0;
+                color: #2c3e50;
+                margin-right: 8px;
+            }
+
+            .grid-2col {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 24px;
+            }
+
+            @media (max-width: 768px) {
+                .grid-2col {
+                    grid-template-columns: 1fr;
+                }
+                .button-group {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .back-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: #e2e8f0;
+                color: #2c3e50;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                margin-bottom: 16px;
+                width: auto;
+            }
+
+            .back-button:hover {
+                background: #cbd5e0;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- START SCREEN -->
+        <div id="startScreen" class="screen active">
+            <div class="container">
+                <div class="card">
+                    <div class="header">
+                        <div class="icon-circle">◉</div>
+                        <h1>Emotion Recognition System</h1>
+                        <p class="subtitle">
+                            Enter your information to begin facial expression
+                            analysis
+                        </p>
+                    </div>
+                    <form id="startForm">
+                        <div class="form-group">
+                            <label for="userName">Full Name</label>
+                            <input
+                                type="text"
+                                id="userName"
+                                data-testid="input-name"
+                                placeholder="Enter your full name"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="userSection"
+                                >Section / Department</label
+                            >
+                            <input
+                                type="text"
+                                id="userSection"
+                                data-testid="input-section"
+                                placeholder="Enter your section"
+                                required
+                            />
+                        </div>
+                        <button type="submit" data-testid="button-start">
+                            Start Emotion Scan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAMERA SCREEN -->
+        <div id="cameraScreen" class="screen">
+            <div class="container">
+                <div class="card card-wide">
+                    <div class="grid-2col">
+                        <div>
+                            <div class="video-container">
+                                <video
+                                    id="video"
+                                    autoplay
+                                    muted
+                                    playsinline
+                                    data-testid="video-camera"
+                                ></video>
+                                <canvas id="canvas"></canvas>
+                                <span
+                                    id="faceStatus"
+                                    class="badge error"
+                                    data-testid="badge-face-status"
+                                    >No Face</span
+                                >
+                                <div
+                                    id="countdown"
+                                    class="countdown hidden"
+                                    data-testid="text-countdown"
+                                ></div>
+                            </div>
+                            <div class="button-group">
+                                <button
+                                    id="scanButton"
+                                    data-testid="button-scan"
+                                    disabled
+                                >
+                                    Start Scan
+                                </button>
+                                <button
+                                    id="cancelButton"
+                                    class="secondary"
+                                    data-testid="button-cancel"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="emotions-panel">
+                            <h3>Live Emotion Detection</h3>
+                            <div id="liveEmotions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="resultScreen" class="screen">
+            <div class="container">
+                <div class="card">
+                    <div class="header">
+                        <h1>Scan Complete</h1>
+                        <p class="subtitle">Analysis completed successfully</p>
+                        <div
+                            id="dominantEmotion"
+                            data-testid="badge-dominant-emotion"
+                        ></div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-row">
+                            <span class="info-label">Name</span>
+                            <span
+                                class="info-value"
+                                id="resultName"
+                                data-testid="text-result-name"
+                            ></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Section</span>
+                            <span
+                                class="info-value"
+                                id="resultSection"
+                                data-testid="text-result-section"
+                            ></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Confidence</span>
+                            <span
+                                class="info-value"
+                                id="resultConfidence"
+                                data-testid="text-result-confidence"
+                            ></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Timestamp</span>
+                            <span
+                                class="info-value"
+                                id="resultTimestamp"
+                                data-testid="text-result-timestamp"
+                            ></span>
+                        </div>
+                    </div>
+
+                    <h3
+                        style="
+                            font-size: 12px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            margin-bottom: 16px;
+                            color: #4a5568;
+                        "
+                    >
+                        All Emotions Detected
+                    </h3>
+                    <div id="allEmotions"></div>
+
+                    <div class="button-group">
+                        <button
+                            id="newScanButton"
+                            data-testid="button-new-scan"
+                        >
+                            New Scan
+                        </button>
+                        <button
+                            id="analyticsButton"
+                            class="secondary"
+                            data-testid="button-view-analytics"
+                        >
+                            Analytics
+                        </button>
+                    </div>
+                    <button
+                        id="exportButton"
+                        class="secondary"
+                        data-testid="button-export"
+                        style="margin-top: 12px"
+                    >
+                        Export Results
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS SCREEN -->
+        <div id="analyticsScreen" class="screen">
+            <div class="container">
+                <button
+                    id="backButton"
+                    class="back-button"
+                    data-testid="button-back"
+                >
+                    Back
+                </button>
+                <h1 style="margin-bottom: 8px">Analytics Dashboard</h1>
+                <p class="subtitle" style="margin-bottom: 24px">
+                    Overview of all emotion scans
+                </p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div
+                            class="stat-value"
+                            id="statTotalScans"
+                            data-testid="stat-total-scans"
+                        >
+                            0
+                        </div>
+                        <div class="stat-label">Total Scans</div>
+                    </div>
+                    <div class="stat-card">
+                        <div
+                            class="stat-value"
+                            id="statAvgConfidence"
+                            data-testid="stat-avg-confidence"
+                        >
+                            0%
+                        </div>
+                        <div class="stat-label">Avg Confidence</div>
+                    </div>
+                    <div class="stat-card">
+                        <div
+                            class="stat-value"
+                            id="statMostCommon"
+                            data-testid="stat-most-common"
+                        >
+                            N/A
+                        </div>
+                        <div class="stat-label">Most Common</div>
+                    </div>
+                    <div class="stat-card">
+                        <div
+                            class="stat-value"
+                            id="statUniqueUsers"
+                            data-testid="stat-unique-users"
+                        >
+                            0
+                        </div>
+                        <div class="stat-label">Unique Users</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3
+                        style="
+                            font-size: 16px;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                        "
+                    >
+                        Emotion Distribution
+                    </h3>
+                    <p class="subtitle" style="margin-bottom: 24px">
+                        Breakdown of detected emotions across all scans
+                    </p>
+                    <div id="emotionDistribution"></div>
+                </div>
+
+                <div class="card" style="margin-top: 24px">
+                    <h3
+                        style="
+                            font-size: 16px;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                        "
+                    >
+                        Scan History
+                    </h3>
+                    <p class="subtitle" style="margin-bottom: 24px">
+                        Recent emotion analysis results
+                    </p>
+                    <div id="scanHistory"></div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // State management
+            let currentUser = { name: "", section: "" };
+            let currentResult = null;
+            let scanHistory = [];
+            let stream = null;
+            let modelsLoaded = false;
+            let detectionInterval = null;
+            let faceDetected = false;
+
+            const emotionLabels = {
+                happy: "Happy",
+                sad: "Sad",
+                neutral: "Neutral",
+                surprised: "Surprised",
+                angry: "Angry",
+                fearful: "Fearful",
+                disgusted: "Disgusted",
+            };
+
+            // Screen navigation
+            function showScreen(screenId) {
+                document
+                    .querySelectorAll(".screen")
+                    .forEach((s) => s.classList.remove("active"));
+                document.getElementById(screenId).classList.add("active");
+            }
+
+            // Load Face-API models
+            async function loadModels() {
+                const MODEL_URL =
+                    "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model";
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+                ]);
+                modelsLoaded = true;
+            }
+
+            // Start camera
+            async function startCamera() {
+                const video = document.getElementById("video");
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                    });
+                    video.srcObject = stream;
+                    await loadModels();
+                    startDetection();
+                } catch (error) {
+                    alert(
+                        "Camera access denied. Please allow camera access to use this application.",
+                    );
+                    showScreen("startScreen");
+                }
+            }
+
+            // Stop camera
+            function stopCamera() {
+                if (stream) {
+                    stream.getTracks().forEach((track) => track.stop());
+                    stream = null;
+                }
+                if (detectionInterval) {
+                    clearInterval(detectionInterval);
+                    detectionInterval = null;
+                }
+            }
+
+            // Real-time face detection
+            function startDetection() {
+                const video = document.getElementById("video");
+                const canvas = document.getElementById("canvas");
+                const faceStatus = document.getElementById("faceStatus");
+                const scanButton = document.getElementById("scanButton");
+
+                detectionInterval = setInterval(async () => {
+                    if (!modelsLoaded || video.readyState !== 4) return;
+
+                    const detection = await faceapi
+                        .detectSingleFace(
+                            video,
+                            new faceapi.TinyFaceDetectorOptions(),
+                        )
+                        .withFaceLandmarks()
+                        .withFaceExpressions();
+
+                    if (detection) {
+                        faceDetected = true;
+                        faceStatus.textContent = "Face Detected";
+                        faceStatus.className = "badge success";
+                        scanButton.disabled = false;
+
+                        // Update live emotions
+                        updateLiveEmotions(detection.expressions);
+
+                        // Draw on canvas
+                        const displaySize = {
+                            width: video.videoWidth,
+                            height: video.videoHeight,
+                        };
+                        faceapi.matchDimensions(canvas, displaySize);
+                        const resizedDetections = faceapi.resizeResults(
+                            detection,
+                            displaySize,
+                        );
+
+                        const ctx = canvas.getContext("2d");
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        faceapi.draw.drawDetections(canvas, resizedDetections);
+                        faceapi.draw.drawFaceLandmarks(
+                            canvas,
+                            resizedDetections,
+                        );
+                    } else {
+                        faceDetected = false;
+                        faceStatus.textContent = "No Face";
+                        faceStatus.className = "badge error";
+                        scanButton.disabled = true;
+
+                        const ctx = canvas.getContext("2d");
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                }, 150);
+            }
+
+            // Update live emotion bars
+            function updateLiveEmotions(expressions) {
+                const container = document.getElementById("liveEmotions");
+                container.innerHTML = "";
+
+                Object.entries(emotionLabels).forEach(([key, label]) => {
+                    const value = expressions[key] || 0;
+                    const percent = (value * 100).toFixed(1);
+
+                    const barDiv = document.createElement("div");
+                    barDiv.className = "emotion-bar";
+                    barDiv.innerHTML = `
+                    <div class="emotion-bar-label">
+                        <strong>${label}</strong>
+                        <span data-testid="text-emotion-${key}">${percent}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-fill" style="width: ${percent}%"></div>
+                    </div>
+                `;
+                    container.appendChild(barDiv);
+                });
+            }
+
+            // Perform scan with countdown
+            async function performScan() {
+                const video = document.getElementById("video");
+                const countdownDiv = document.getElementById("countdown");
+                const scanButton = document.getElementById("scanButton");
+
+                scanButton.disabled = true;
+
+                // Countdown
+                for (let i = 3; i > 0; i--) {
+                    countdownDiv.textContent = i;
+                    countdownDiv.classList.remove("hidden");
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                }
+                countdownDiv.classList.add("hidden");
+
+                // Collect samples
+                const samples = [];
+                for (let i = 0; i < 5; i++) {
+                    const detection = await faceapi
+                        .detectSingleFace(
+                            video,
+                            new faceapi.TinyFaceDetectorOptions(),
+                        )
+                        .withFaceExpressions();
+
+                    if (detection) {
+                        samples.push(detection.expressions);
+                    }
+                    await new Promise((resolve) => setTimeout(resolve, 100));
+                }
+
+                // Calculate average
+                if (samples.length > 0) {
+                    const avgEmotions = {};
+                    Object.keys(emotionLabels).forEach((emotion) => {
+                        const sum = samples.reduce(
+                            (acc, sample) => acc + (sample[emotion] || 0),
+                            0,
+                        );
+                        avgEmotions[emotion] = sum / samples.length;
+                    });
+
+                    // Find dominant emotion
+                    let maxEmotion = "";
+                    let maxValue = 0;
+                    Object.entries(avgEmotions).forEach(([emotion, value]) => {
+                        if (value > maxValue) {
+                            maxValue = value;
+                            maxEmotion = emotion;
+                        }
+                    });
+
+                    // Create result
+                    const now = new Date();
+                    currentResult = {
+                        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        name: currentUser.name,
+                        section: currentUser.section,
+                        emotion: emotionLabels[maxEmotion],
+                        confidence: maxValue * 100,
+                        allEmotions: avgEmotions,
+                        timestamp: now.toISOString(),
+                        date: now.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                        }),
+                        time: now.toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        }),
+                    };
+
+                    scanHistory.push(currentResult);
+                    stopCamera();
+                    showResultScreen();
+                } else {
+                    alert(
+                        "Could not detect face during scan. Please try again.",
+                    );
+                    scanButton.disabled = false;
+                }
+            }
+
+            // Show result screen
+            function showResultScreen() {
+                const emotionClass = `emotion-${currentResult.emotion.toLowerCase()}`;
+
+                document.getElementById("dominantEmotion").className =
+                    `result-badge ${emotionClass}`;
+                document.getElementById("dominantEmotion").textContent =
+                    currentResult.emotion;
+
+                document.getElementById("resultName").textContent =
+                    currentResult.name;
+                document.getElementById("resultSection").textContent =
+                    currentResult.section;
+                document.getElementById("resultConfidence").textContent =
+                    `${currentResult.confidence.toFixed(1)}%`;
+                document.getElementById("resultTimestamp").textContent =
+                    `${currentResult.date} at ${currentResult.time}`;
+
+                // Show all emotions
+                const container = document.getElementById("allEmotions");
+                container.innerHTML = "";
+
+                const sorted = Object.entries(currentResult.allEmotions).sort(
+                    ([, a], [, b]) => b - a,
+                );
+
+                sorted.forEach(([emotion, value]) => {
+                    const percent = (value * 100).toFixed(1);
+                    const barDiv = document.createElement("div");
+                    barDiv.className = "emotion-bar";
+                    barDiv.innerHTML = `
+                    <div class="emotion-bar-label">
+                        <strong>${emotionLabels[emotion]}</strong>
+                        <span>${percent}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-fill" style="width: ${percent}%"></div>
+                    </div>
+                `;
+                    container.appendChild(barDiv);
+                });
+
+                showScreen("resultScreen");
+            }
+
+            // Show analytics
+            function showAnalytics() {
+                const totalScans = scanHistory.length;
+                const avgConfidence =
+                    totalScans > 0
+                        ? scanHistory.reduce(
+                              (sum, scan) => sum + scan.confidence,
+                              0,
+                          ) / totalScans
+                        : 0;
+
+                const emotionCounts = {};
+                scanHistory.forEach((scan) => {
+                    emotionCounts[scan.emotion] =
+                        (emotionCounts[scan.emotion] || 0) + 1;
+                });
+
+                const mostCommon =
+                    totalScans > 0
+                        ? Object.entries(emotionCounts).sort(
+                              ([, a], [, b]) => b - a,
+                          )[0]?.[0] || "N/A"
+                        : "N/A";
+
+                const uniqueUsers = new Set(scanHistory.map((s) => s.name))
+                    .size;
+
+                document.getElementById("statTotalScans").textContent =
+                    totalScans;
+                document.getElementById("statAvgConfidence").textContent =
+                    `${avgConfidence.toFixed(1)}%`;
+                document.getElementById("statMostCommon").textContent =
+                    mostCommon;
+                document.getElementById("statUniqueUsers").textContent =
+                    uniqueUsers;
+
+                // Emotion distribution
+                const distContainer = document.getElementById(
+                    "emotionDistribution",
+                );
+                distContainer.innerHTML = "";
+
+                Object.entries(emotionLabels).forEach(([key, label]) => {
+                    const count = emotionCounts[label] || 0;
+                    const percentage =
+                        totalScans > 0 ? (count / totalScans) * 100 : 0;
+
+                    const barDiv = document.createElement("div");
+                    barDiv.className = "emotion-bar";
+                    barDiv.innerHTML = `
+                    <div class="emotion-bar-label">
+                        <strong>${label}</strong>
+                        <span>${count} (${percentage.toFixed(0)}%)</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                    distContainer.appendChild(barDiv);
+                });
+
+                // Scan history
+                const historyContainer = document.getElementById("scanHistory");
+                historyContainer.innerHTML = "";
+
+                if (totalScans === 0) {
+                    historyContainer.innerHTML =
+                        '<p style="text-align: center; color: #718096; padding: 48px 0;">No scans recorded yet</p>';
+                } else {
+                    scanHistory
+                        .slice()
+                        .reverse()
+                        .forEach((scan) => {
+                            const itemDiv = document.createElement("div");
+                            itemDiv.className = "history-item";
+                            itemDiv.innerHTML = `
+                        <div class="history-header">
+                            <div class="history-name" data-testid="history-name-${scan.id}">${scan.name}</div>
+                            <div class="history-time">${scan.time}</div>
+                        </div>
+                        <div class="history-details">
+                            <span class="history-badge">${scan.emotion}</span>
+                            <span>${scan.confidence.toFixed(1)}% confidence • ${scan.section}</span>
+                        </div>
+                    `;
+                            historyContainer.appendChild(itemDiv);
+                        });
+                }
+
+                showScreen("analyticsScreen");
+            }
+
+            // Export results
+            function exportResults() {
+                if (!currentResult) return;
+
+                const text = `
+EMOTION RECOGNITION SCAN RESULT
+================================
+
+Name: ${currentResult.name}
+Section: ${currentResult.section}
+Dominant Emotion: ${currentResult.emotion}
+Confidence: ${currentResult.confidence.toFixed(2)}%
+Date: ${currentResult.date}
+Time: ${currentResult.time}
+
+All Detected Emotions:
+${Object.entries(currentResult.allEmotions)
+    .sort(([, a], [, b]) => b - a)
+    .map(
+        ([emotion, value]) =>
+            `  ${emotionLabels[emotion]}: ${(value * 100).toFixed(2)}%`,
+    )
+    .join("\n")}
+
+Generated by Emotion Recognition System
+            `.trim();
+
+                const blob = new Blob([text], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `emotion-scan-${currentResult.name.replace(/\s+/g, "-")}-${Date.now()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // Event listeners
+            document
+                .getElementById("startForm")
+                .addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    currentUser.name = document
+                        .getElementById("userName")
+                        .value.trim();
+                    currentUser.section = document
+                        .getElementById("userSection")
+                        .value.trim();
+                    showScreen("cameraScreen");
+                    startCamera();
+                });
+
+            document
+                .getElementById("scanButton")
+                .addEventListener("click", performScan);
+
+            document
+                .getElementById("cancelButton")
+                .addEventListener("click", () => {
+                    stopCamera();
+                    showScreen("startScreen");
+                });
+
+            document
+                .getElementById("newScanButton")
+                .addEventListener("click", () => {
+                    document.getElementById("userName").value = "";
+                    document.getElementById("userSection").value = "";
+                    currentUser = { name: "", section: "" };
+                    currentResult = null;
+                    showScreen("startScreen");
+                });
+
+            document
+                .getElementById("analyticsButton")
+                .addEventListener("click", showAnalytics);
+
+            document
+                .getElementById("backButton")
+                .addEventListener("click", () => {
+                    showScreen("resultScreen");
+                });
+
+            document
+                .getElementById("exportButton")
+                .addEventListener("click", exportResults);
+        </script>
+    </body>
+</html>
